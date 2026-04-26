@@ -23,47 +23,6 @@ public:
     }
 };
 
-#include <bits/stdc++.h>
-using namespace std;
-
-class BoundedBuffer {
-private:
-    queue<int> buffer;
-    int capacity;
-    mutex mtx;
-    condition_variable not_full, not_empty;
-
-public:
-    BoundedBuffer(int cap) : capacity(cap) {}
-
-    void produce(int item) {
-        unique_lock<mutex> lock(mtx);
-        not_full.wait(lock, [&]() {
-            return buffer.size() < capacity;
-        });
-
-        buffer.push(item);
-        cout << "Produced: " << item << endl;
-
-        not_empty.notify_one();
-    }
-
-    int consume() {
-        unique_lock<mutex> lock(mtx);
-        not_empty.wait(lock, [&]() {
-            return !buffer.empty();
-        });
-
-        int item = buffer.front();
-        buffer.pop();
-
-        cout << "Consumed: " << item << endl;
-
-        not_full.notify_one();
-        return item;
-    }
-};
-
 int main() {
     BoundedBuffer buffer(5);
 

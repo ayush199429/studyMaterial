@@ -1,0 +1,121 @@
+#include <iostream>
+#include <cmath>
+#include <cstdio>
+#include <string>
+#include <vector>
+#include<bits/stdc++.h>
+#include <algorithm>
+
+using namespace std;
+
+/*
+Let’s try to implement the base logic of this game. The snake can move up, down, left or right in a 2-dimensional board of arbitrary size. There are 3 rules for this game:
+
+    1- Every time moveSnake() is called, the snake moves up, down, left or right 
+
+    2- The snake’s initial size is 3 and grows by 1 every 5 moves 
+
+    3- The game ends when the snake hits itself
+*/
+
+enum Direction{
+    UP = 0, DOWN, RIGHT, LEFT
+};
+
+class Board{
+    size_t ROW, COL;
+    vector<vector<bool>> grid;
+    public:
+    Board(int row, int col)
+    :ROW(row)
+    ,COL(col)
+    {
+        for(int i=0;i<ROW;i++){
+            grid.push_back(vector<bool>(COL,false));
+        }
+    }
+};
+// c1 c2 c3 c4 
+class Snake{
+    size_t size = 3, moveNumber = 0;
+    deque<pair<int,int>> snakeCells;
+    public:
+    Snake(){
+        snakeCells.push_back({0,0});
+        snakeCells.push_back({0,1});
+        snakeCells.push_back({0,2});
+    }
+    void move(Direction dir){
+        auto currHead = snakeCells.front();
+        int row = currHead.first, col = currHead.second;
+        int newRow, newCol;
+        getNewCell(row,col,newRow,newCol,dir);
+        snakeCells.push_front({newRow,newCol});
+        moveNumber++;
+        if((size-3)%5 == 0)
+            size++;
+        else
+            snakeCells.pop_back();
+        for(auto& cell:snakeCells){
+            cout<<cell.first<<","<<cell.second<<"; ";
+        }
+        cout<<endl;
+    }
+    
+    bool isValid(){
+        auto currHead = snakeCells.front();
+        auto headRow = currHead.first, headCol = currHead.second;
+        for(auto& cell:snakeCells){
+            if(cell.first == headRow and cell.second == headCol)
+                return false;
+        }
+        return true;
+    }
+    private:
+    void getNewCell(int row, int col, int& newRow, int& newCol, Direction dir){
+        if(dir == UP){
+            newRow = row-1;
+            newCol = col;
+        }
+        else if(dir == DOWN){
+            newRow = row+1;
+            newCol = col;
+        }
+        else if(dir == RIGHT){
+            newCol = col+1;
+            newRow = row;
+        }
+        else{
+            newCol = col-1;
+            newRow = row;
+        }
+    }
+};
+
+class SnakeGame{
+    public:
+    SnakeGame(){}
+    private:
+    Snake snake;
+    //Board board(10,10);
+    size_t moveNumber;
+    Direction currDirection;
+    bool bGameOver = false;
+    public:
+    void play(){
+        while(bGameOver == false){
+            currDirection = scanDirection();
+            snake.move(currDirection);
+            bGameOver = !snake.isValid();
+            //sleep(1000);
+        }
+    }
+    Direction scanDirection(){
+        return UP;
+    }
+};
+
+int main(){
+    SnakeGame obj;
+    obj.play();
+}

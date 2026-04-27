@@ -1,0 +1,21 @@
+HLD Round - asked to create a youtube like home page for a software like confluence where we need to show the most "engaged with" documents across the org. additionally, do not show the docs you have written or already read (like youtube). Mostly a standard leaderboard question. I used cassandra to store the docs' user view info. the "engagement" metric for judging a page's rank was not too clear and we wasted some time on that. Some critical feedback I got was on the database schema design to figure out the ranking of the pages for a particular user and removing the already viewed pages from that.
+
+
+-------------------------------------------------
+The Popular Tagging System. Majority of the focus was on scaling tag-based search and popular tags.
+Question: Tagging Management Service
+
+Atlassian has a number of different products, each containing different types of content. As an example, let’s look at three of our products:
+
+Jira – Issues
+Confluence – Pages
+Bitbucket – Pull requests
+We want to build a system that allows users to tag content from different products, and then to view content by tags. A goal of this system is that it should be built in a product-agnostic way so that we could add new products in the future without a large amount of work. There are three key experiences that we want to build here:
+
+As a user, I can add, remove, and update tags on content.
+As a user, I can click on a tag and see all content that has been associated with that tag.
+As a user, I can see a dashboard of popular tags.
+The recruiter focused on API Specification, DB Schema, DB Choice (SQL/NoSQL), Communication protocols, SQS vs RabbitMQ vs Kafka, and Rate limiting.
+
+-------------------------------
+Design popular K feeds in confluence. Follow-ups included popularity score calculation strategies, support for querying in windows and updating dashboards of users in real-time.

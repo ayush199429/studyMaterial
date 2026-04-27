@@ -1,0 +1,55 @@
+Features of BMS:
+1. Add Events
+2. Register a User
+3. Search for Events
+4. Book tickets
+
+Actors:
+1. User
+2. Event
+3. Place
+4. Ticket
+
+class BMS{
+	SearchMovies(movieName){}
+
+};
+
+class Account{
+	MobNo;
+	password;
+};
+
+class User{
+	Account account;
+	UserName;
+	List<Event> WatchedHistory(){}
+};
+
+enum ScreenType{
+	2D,
+	3D,
+	4D
+};
+
+class Movie{
+	MovieName;
+	Details; //Cast n Crew
+	ScreenType;
+	List<Shows> getShowsOfAMovie(MovieID){}
+};
+
+class Theatre{
+	Place;
+	AudiNo;	
+};
+
+class Show{
+	Movie,
+	Theatre
+};
+
+class Ticket{
+	
+};
+class PaymentsManager{};

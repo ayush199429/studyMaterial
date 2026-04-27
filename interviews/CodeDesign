@@ -1,0 +1,62 @@
+#include <iostream>
+
+1. OTP
+2. Security Ques
+3. Face Detection
+
+class User{
+    string UserID,
+    name,
+    email,
+    phoneNo;
+};
+
+/*
+class Constituency{
+    unsigned int id, constituencyNo;
+    string name;
+};
+*/
+
+class Voter : public User{
+    string VoterID;
+    Date dob, dateOfRegistration;
+    string aadharNo;
+    unsigned int constituencyNo;
+};
+
+class Party{
+    unsigned int partyID;
+    string name;
+};
+
+/*
+class Candidate{
+    unsigned int candidateID, partyID;
+    string name;
+    unsigned constituencyNo;
+};
+*/
+
+class VotingSystem{
+    //unordered_set<User> users;
+    bool login(){
+        if(CheckUserNamePwd() and AadharAuthenticate(voter.aadharID))
+            return true;
+    }
+    bool registerNewVoter(Voter& obj){}
+    bool CastVote(Voter& voter, unsigned int partyID){
+        if(IfUserHasNotAlreadyVoted() && CheckIfValidParty()){
+            UpdateTheVoteRecordTable();
+        }
+    }
+    /*
+    vector<Canddidate> getCandidatesList(unsigned int constituencyNo){}
+    */
+};
+
+int main() {
+
+}
+
+

@@ -1,0 +1,65 @@
+Requirements:
+1. user should be able to provide his credentials(username)
+2. user should be able to provide the verification code.
+3. Multiple platforms shoiuld be supported.
+
+enum AuthenticationStatus{
+	PASS,
+	FAIL,
+	ERROR
+};
+
+class Response{
+	AuthenticationStatus status;
+	string name;
+};
+
+class AadharResponse : public Response{
+	string AadharLastDigits;
+};
+
+class EmailResponse : public Response{
+	string 
+};
+
+class Authentication{
+	virtual Response Authenticate() = 0;
+	Response CallbackOnAadharFailed(){}
+	Response CallbackOnAadharPass(){}
+	Response CallbackOnAadharException(){}
+};
+
+class AadharAuthenticate : public Authentication{
+	string mobNo;
+	AadharAuthenticate(string mobNo)
+	:mobNo(mobNo)
+	{}
+	
+	Response Authenticate(){
+		try{
+			string otp = GenerateAadharOTP(mobNo);
+			if(User'sOTP == otp){
+				AadharDetails = FetchAadharDetails(otp);
+			}
+			if(AadharDeatils.status == PASSED){
+				CallbackOnAadharPass();
+			}
+			else if(AadharDeatils.status == FAILED){
+				CallbackOnAadharFailed();
+			}
+			return new AadharResponse(AadharDetails);
+		}
+		catch(){
+			CallbackOnAadharException();
+			return Response(ERROR);
+		}
+	}
+};
+
+
+
+
+
+
+
+

@@ -1,0 +1,47 @@
+#include <cmath>
+#include <cstdio>
+#include <vector>
+#include <iostream>
+#include <algorithm>
+using namespace std;
+
+/*
+Functional Req:
+1. Store data into data structure
+2. Multiple Users should be able to read from the data store.
+3. Periodically update the data from Disk/Network source.
+
+NFR:
+1. Memory leak should not be there
+2. Design should be scalable
+3. Thread Safe
+*/
+
+class ConfigStore{
+    private:
+    bool reloadFlag;
+    lock<semaphore> readLock;
+    unordered_map<data1,data2> dataStore1, dataStore1;
+    void checkForUpdates(){
+        if(checkDisk(newData) or checkNetwork(newData)){
+            reloadFlag = true;
+            updateDataStore(newData);
+        }
+    }
+    void newReadThread(){
+        readLock.get();
+        //read the data;
+    }
+    public:
+    void updateDataStore(Data newData){
+        //updateDataStore(dataStore2, newData);       
+        DataStorePtr = dataStore2;
+        reloadFlag = false;
+    }
+    void ReadData(Data* dataPtr){
+        while(reloadFlag == true)
+            ;
+        newReadThread(dataPtr);
+    }
+}
+

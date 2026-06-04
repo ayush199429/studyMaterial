@@ -1,0 +1,121 @@
+Actors:
+movie
+shows
+theaters
+users
+
+APIs:
+getLatestMovies()
+searchMovie(movieName)
+getMovieShows(movieName)
+bookShow(showId)
+    
+struct User{
+    uint userId;
+    string name;
+    Account account;
+    DOB,
+    address
+}
+
+struct Movie{
+    uint movieID;
+    string name;
+    Date releaseDate;
+    list<string> Cast;
+    uint runTime;
+}
+
+struct SEAT{
+    string id;
+    uint rowNo;
+    SEAT_TYPE type;
+    double price;
+};
+
+enum BOOKING_STATUS{
+    BOOKED,
+    FAILED,
+    PENDING
+};
+
+enum PAYMENT_STATUS{
+    PAID,
+    FAILED
+};
+
+struct BookingDetails{
+    uint userID;
+    uint showID;
+    Time bookingTime;
+    BOOKING_STATUS bookStatus;
+    PAYMENT_STATUS paymentStatus;
+};
+
+struct PaymentObject{
+    ...
+}
+
+class UserService{
+    list<User> usersList;
+    map<user,list<booking>> bookings;
+    void addUser(User& user){
+    }
+    void addUserBooking(user, booking){
+    }
+};
+class MovieService{
+    unordered_map<Movie> moviesList;
+    list<Movie> latestMoviesList;
+    addMovie(Movie& movie){
+    }
+    list<Movie> getLatestMovies(){
+        return latestMoviesList;
+    }
+    Movie searchMovie(string moviename){
+        return movieslist[moviename];
+    }
+};
+class ShowService{
+    privte: ShowService();
+    static ShowService& getObject(){
+        static ShowService object;
+        return object;
+    }
+    list<Theatre> theatresList;
+    unordered_map<string,list<Show>> shows;
+    list<Show> getMovieShows(string movie){
+        return shows[movie];
+    }
+    BookingDetails makeBooking(user, show, list<Seat>& seats){
+        double price = calculatePrice(seats);
+        bool isPaid = paymentSrv.makePayment(price, user);
+        if(!isPaid)
+            return {user, show, seats, FAILED, PAYMENT_FAILED};
+        BookingDetails booking = {user, show, seats, BOOKED, paymentMode};
+        userSrv.addBooking(user, booking);
+        return booking;
+    }
+};
+class PaymentService{};
+
+class BMS{
+    UserService usrSrv = UserService::getObject();
+    MovieService movieSrv = MovieService::getObject();
+    ShowService showSrv = ShowService::getObject();
+    getLatestMovies(){
+        movieSrv.getLatest();
+    }
+    searchMovie(movieName){
+        movieSrv.searchMovie();
+    }
+    getMovieShows(movieName){
+        showSrv.getMovieShows(movieName);
+    }
+    bookShow(showId){
+        list<Seat> seats = getFromUser();
+        showSrv.bookShow(user,show,seats);
+    }
+}
+
+

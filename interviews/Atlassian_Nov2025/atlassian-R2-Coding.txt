@@ -1,0 +1,127 @@
+#include <iostream>
+#include <cmath>
+#include <cstdio>
+#include <string>
+#include <vector>
+#include <algorithm>
+#include<bits/stdc++.h>
+
+using namespace std;
+
+// Question:
+
+// Imagine you are given a stream of content ids along with an associated action to be performed on them.
+// Example of contents are video, pages, posts etc. There can be two actions associated with a content id:
+// increasePopularity → increases the popularity of the content by 1.
+// decreasePopularity → decreases the popularity of the content by 1.
+// content ids are positive integers
+// If there are no contentIds with popularity greater than 0, return -1
+
+// Implement a class that can return the mostPopular content id at any time while consuming the stream of content ids and its associated action.
+
+
+// interface PopularityTracker {
+//     void increasePopularity(int contentId);
+//     void decreasePopularity(int contentId);
+//     int mostPopular();
+// }
+
+// Sample execution: 
+// [
+//   popularityTracker.increasePopularity(7);
+//   popularityTracker.increasePopularity(7);
+//   popularityTracker.increasePopularity(8);
+//   popularityTracker.mostPopular();        // returns 7
+//   popularityTracker.increasePopularity(8);
+//   popularityTracker.increasePopularity(8);
+//   popularityTracker.mostPopular();        // returns 8
+//   popularityTracker.decreasePopularity(8);
+//   popularityTracker.decreasePopularity(8);
+//   popularityTracker.mostPopular();        // returns 7
+//   popularityTracker.decreasePopularity(7);
+//   popularityTracker.decreasePopularity(7);
+//   popularityTracker.decreasePopularity(8);
+//   popularityTracker.mostPopular();        // returns -1 since there is no content with popularity greater than 0
+// ]
+
+class Node{
+    size_t count, id;
+    public: Node(size_t count, size_t id)
+    :count(count)
+    ,id(id)
+    {}
+    size_t getCount()const{
+        return count;
+    }
+    void setCount(size_t count){
+        this->count = count;
+    }
+    size_t getID()const{
+        return id;
+    }
+    bool operator<(const Node& other)const{
+        return count > other.count;
+    }
+    bool operator==(const Node& other)const{
+        return (count==other.count and id==other.id);
+    }
+};
+
+class PopularityTracker {
+    public:
+     void increasePopularity(size_t id){
+        managePopularity(id, INCREMENT);
+     }
+     void decreasePopularity(int id){
+        managePopularity(id, DECREMENT);
+     }
+     int mostPopular(){
+        auto it = sortedSet.begin();
+        if(it->getCount() <= 0)
+            return -1;
+        return it->getID();
+     }
+     private:
+     unordered_map<size_t,size_t> mapVotes;
+     multiset<Node> sortedSet;
+     enum Operation{
+        INCREMENT,
+        DECREMENT
+     };
+     void managePopularity(size_t id, Operation op){
+        size_t currCount = (mapVotes.find(id) == mapVotes.end()) ? -1 : mapVotes[id];
+        if(currCount == -1){
+            if(op == INCREMENT)
+                mapVotes[id] = 1;
+            else
+                return;
+        }
+        else{
+            if(op == INCREMENT)
+                mapVotes[id]++;
+            else
+                mapVotes[id]--;
+            sortedSet.erase({currCount,id});
+        }
+        cout<<id<<","<<mapVotes[id]<<endl;
+        sortedSet.insert({mapVotes[id],id});
+     }
+};
+
+int main() {
+    PopularityTracker popularityTracker;
+    popularityTracker.increasePopularity(7);
+    popularityTracker.increasePopularity(7);
+    popularityTracker.increasePopularity(8);
+    cout<<popularityTracker.mostPopular() <<endl;        // returns 7
+    popularityTracker.increasePopularity(8);
+    popularityTracker.increasePopularity(8);
+    cout<<popularityTracker.mostPopular() << endl;        // returns 8
+    popularityTracker.decreasePopularity(8);
+    popularityTracker.decreasePopularity(8);
+    cout<<popularityTracker.mostPopular() <<endl;        // returns 7
+    popularityTracker.decreasePopularity(7);
+    popularityTracker.decreasePopularity(7);
+    popularityTracker.decreasePopularity(8);
+    cout<<popularityTracker.mostPopular()<<endl;   
+}

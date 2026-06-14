@@ -1,0 +1,44 @@
+#include <cmath>
+#include <cstdio>
+#include <iterator>
+#include <vector>
+#include <iostream>
+#include <algorithm>
+using namespace std;
+
+#define BEGIN_ADDR xxx
+#define HEAP_SIZE 1GB
+
+class ChunkAllocator{
+    public:
+    void* allocate(size_t size){}
+    void free(void* address){
+        if(lock.available())
+            free(address);
+    }
+    
+    private:
+    void* beginAddr;
+    size_t totalHeapSize;
+    std::lock<mutex> lock;
+}
+
+class HeapAllocator{
+    public:
+    void* allocate(size_t size){
+        
+    }
+    void free(void* address){
+        addressMap[address].free(address)
+    }
+    
+    private:
+    unordered_map<size_t,ChunkAllocator> mapOfChunks;
+    unordered_map<void*,ChunkAllocator> addressMap;
+}
+
+sorted arr[] : [(add1,size1),(add2, size2),(add3,size3),(add4,size4)];
+pq: nlogn search, logn insert
+vector: O(n) search, O(nlogn) insert
+
+| |----|    |------|   |--------------------

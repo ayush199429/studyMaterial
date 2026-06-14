@@ -1,0 +1,90 @@
+// Hello! 
+//Hello
+
+// Generate a list of n distinct random numbers b/w [x,y], (x,y included)
+//Given a function int rand(x,y)
+// y-x+1 >= n
+// exception if y-x+1 < n
+
+vector<int> generateNDistictRandom(int x, int y, int n){
+    if(y < x)
+        throw("Invalid range given");
+    if(y - x + 1 < n)
+        throw("Given Range is less than N");
+    unordered_set<int> seen; //already generated numbers
+    vector<int> res; //list to be returned
+    while(res.size() < n){
+        int randomNum;
+        while(true){
+            randomNum = rand(x,y);
+            if(seen.find(randomNum) == seend.end())
+                break;
+        }
+        
+        seen.insert(randomNum);
+        res.push_back(randomNum);
+    }
+    return res;
+}
+
+
+Space : O(n)
+Time: O()
+//TC1: 1, 10, 4
+//
+  
+vector<int> generateNDistictRandom(int x, int y, int n, vector<int>& res, unordered_set<int>& seen){
+    if(y < x)
+        throw("Invalid range given");
+    if(y - x + 1 < n)
+        throw("Given Range is less than N");
+    unordered_set<int> seen; //already generated numbers
+    vector<int> res; //list to be returned
+    while(res.size() < n){
+        int randomNum = rand(x,y);
+        seen.insert(randomNum);
+        res.push_back(randomNum);
+        if(randomNum > x)
+            generateNDistictRandom(x,randomNum,n,res);
+        if(res.size() < n)
+            generateNDistictRandom(randomNum+1,y,n,res);
+    }
+    return res;
+}
+
+[1, 100], n = 4
+
+1, 2, 3, 4
+  
+  
+// Part 2: You can choose to build on part 1 or write from scratch. 
+// Write a function generateBingoCard() that randomly generates a bingo card.
+
+// A bingo card is a 5x5 grid of squares, each containing a distinct number 
+// (except for the center space, which has no number). The numbers for the first column can be 
+// from the range 1-15, with subsequent columns having ranges 16-30, 31-45, 46-60 and 61-75. Output is a column-first 2D array 
+// (e.g. [[1,2,3,4,5],[16,17,18,19,20],[31,32,33,34],[46,47,48,49,50],[61,62,63,64,65]]).
+
+vector<vector<int>> bingoGenerator(){
+    vector<vector<int>> card(5);
+    vector<int> column;
+    for(int i=0;i<5;i++){
+        if(i == 2)
+            column = generateNDistictRandom(i*15+1, i*15+15, 4);
+        else
+            column = generateNDistictRandom(i*15+1, i*15+15, 5);
+        res.push_back(column);
+    }
+    return res;
+}
+
+// Part 3: Building on the first function, create a function generateBingoCards(N) that returns N bingo cards, 
+// with the stipulation that every column on every bingo card is distinct from every other column on every other 
+// bingo card (they cannot have the same numbers in the same order). 
+
+1 -> 2 -> 3 -> 4 -> 5
+1 -> 2 -> 3 -> 4 -> 5
+  
+  
+ 1,11,2,3,4
+ 11,1,2,3,4 

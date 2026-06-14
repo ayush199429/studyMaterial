@@ -1,0 +1,57 @@
+/*
+Input: list of (ccy1, ccy2, exchange_rate from ccy1 to ccy2) (Example: [ (USD, JPY, 110) ,  (JPY, USD, .01)] ) 
+Output: A cycle (ccy1, ccy2, …, ccy_k) that “in the money”, i.e. 1 * fx(CCY1, ccy2) * fx(ccy2, ccy3)... * fx(ccyN, CCY1) > 1.
+Example:
+Let’s assume we can exchange 1 USD to 110 JPY (= (USD, JPY, 110) , and 1 JPY to .01 USD (= (JPY, USD, .01)), then we expect to see the output to be, for example, (USD, JPY, USD) , or (JPY, USD, JPY).
+USD - JPY - USD : 0.
+1 -> [cc1 -> cc2 -> cc3 -> cc1] > 1
+
+1USD -> 1*110 = 110JPY -> 110JPY *.01 USD/JPY = 1.1 USD 
+110, 100, 0.05
+1*110*0.05 < 1
+1*110*100*0.05 > 5.5
+
+cc1 -> n1 rates
+cc2 -> n2 rates
+ccn -> nn rates
+
+1 * FX1 * FX2 * ... FX[n] > 1
+ln(a*b) = ln(a) + ln(b)
+ln(FX1) + ln(FX2) ..+ ln(FXn) > 0
+
+         1
+     2.        3
+  4.        5.    6
+    1       1
+*/
+bool dfs(vector<int>& res, int srcCurr, int ind, float currSum, unordered_map<int,vector<pair<int,float>>& graph){
+    if(srcCurr == res[0] and ind > 1){
+        if(currSum >= 1)
+          return true;
+        return false;
+    }
+    for(auto& child:graph[srcCurr]){
+        float val = child.second;
+        int next = child.first;
+        res[ind] = next;
+        if(dfs(res, next, ind+1, currSum+val, graph))
+            return true;
+    }
+    return false;
+}
+
+vector<int> findCurrencyOrder(vector<vector<float>>& input, int totalCurr){
+    unordered_map<int,vector<pair<int,float>> graph;
+    for(auto& rate:input){
+        int cc1 = rate[0], cc2 = rate[1];
+        float value = rate[2];
+        graph[cc1].push_back({cc2,log(value)});
+    }
+    vector<int> res(graph.size(),0);
+    for(int curr=1;curr<=totalCurr;curr++){
+      res[0] = curr;
+      if(dfs(res,curr,1,0,graph))
+        return res;
+    }
+    return res;
+}

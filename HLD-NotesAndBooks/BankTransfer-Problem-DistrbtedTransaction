@@ -1,0 +1,152 @@
+# Bank Transfer Problem
+
+Goal: Transfer ₹100 from Account A (DB1) to Account B (DB2).
+
+## Naive Approach
+
+1. Debit A
+2. Credit B
+
+Problems:
+
+* Debit succeeds, Server crashes before Credit.
+* Credit succeeds, response lost.
+* Credit service unreachable.
+* Network timeout after Credit.
+* User retries and gets charged twice.
+
+The system often reaches an UNKNOWN state where we don't know whether Credit happened or not.
+
+Therefore simple sequential calls are not reliable.
+
+---
+
+## Two-Phase Commit (2PC)
+
+Coordinator performs:
+
+### Phase 1: Prepare
+
+Ask all participants:
+
+"Can you commit?"
+
+If everyone replies YES, they enter PREPARED state and hold locks.
+
+### Phase 2: Commit
+
+Coordinator sends COMMIT to all participants.
+
+Advantages:
+
+* True atomicity.
+* Either both Debit and Credit happen, or neither.
+
+Problems:
+
+* Coordinator is critical.
+* Participants may block waiting for final decision.
+* Distributed locks held for long time.
+* Lower availability.
+* Higher latency.
+* Doesn't scale well for microservices.
+
+---
+
+## Saga Orchestrator Solution
+
+Maintain a durable transaction table:
+
+## TxnID | State
+
+T1    | PENDING
+T1    | DEBIT_DONE
+T1    | COMPLETED
+T1    | COMPENSATED
+
+Flow:
+
+1. Create transaction T1.
+2. Debit A.
+3. Update state -> DEBIT_DONE.
+4. Credit B.
+5. Update state -> COMPLETED.
+
+If Credit fails:
+
+1. Refund A.
+2. Update state -> COMPENSATED.
+
+---
+
+## Failure Recovery
+
+If orchestrator crashes:
+
+* State is already stored in DB.
+* Another orchestrator instance can continue.
+
+Recovery worker periodically scans:
+
+* PENDING
+* DEBIT_DONE
+
+transactions and resumes processing.
+
+No state is stored only in memory.
+
+---
+
+## Idempotency
+
+Every transfer has a unique TxnID.
+
+Debit(T1)
+Credit(T1)
+Refund(T1)
+
+can be retried safely multiple times.
+
+This prevents duplicate debits/credits during retries.
+
+---
+
+## Event Publishing
+
+Problem:
+
+Credit DB update succeeds
+Service crashes before publishing Kafka event
+
+Solution:
+
+Transactional Outbox Pattern
+
+Same DB transaction:
+
+1. Credit account
+2. Insert Outbox event
+
+Background publisher later sends event to Kafka.
+
+No event loss.
+
+---
+
+## Final Takeaway
+
+Naive Approach:
+
+* Simple but unsafe.
+
+2PC:
+
+* Strong consistency.
+* Blocking, locks, lower availability.
+
+Saga Orchestrator:
+
+* Eventual consistency.
+* Recovery-friendly.
+* Scalable.
+* Commonly used in modern distributed systems and microservice architectures.

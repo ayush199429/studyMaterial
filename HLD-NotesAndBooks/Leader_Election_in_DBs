@@ -1,0 +1,406 @@
+# Banking Systems, Consistency, Quorum and Raft - Notes
+
+## 1. Strong Consistency in Banking
+
+For critical operations like:
+
+* Account balance
+* Money transfer
+* Available funds
+
+The user must always see the latest committed state.
+
+Example:
+
+Balance = 1000
+
+Transfer = -100
+
+After transfer succeeds, every strong read must return:
+
+Balance = 900
+
+and never 1000.
+
+---
+
+## 2. Why Async Read Replicas Are Dangerous
+
+Architecture:
+
+Primary DB
+|
++--> Replica1
++--> Replica2
++--> Replica3
+
+Flow:
+
+1. Primary updates balance to 900.
+2. Primary immediately replies SUCCESS.
+3. Replication to replicas happens later.
+
+During replication lag:
+
+Primary = 900
+Replica = 1000
+
+Reading from replica may return stale data.
+
+Therefore:
+
+Async replicas alone do NOT provide strong consistency.
+
+---
+
+## 3. How Banking Systems Usually Handle Reads
+
+### Option A (Most Common)
+
+Writes -> Primary
+Critical Reads -> Primary
+
+Replicas are used only for:
+
+* Analytics
+* Reporting
+* Dashboards
+* Historical queries
+
+---
+
+### Option B
+
+Use a strongly consistent distributed database.
+
+Examples:
+
+* CockroachDB
+* TiDB
+* YugabyteDB
+
+These use consensus protocols (Raft).
+
+---
+
+## 4. Quorum Basics
+
+Suppose:
+
+N = 3 replicas
+
+R1
+R2
+R3
+
+Choose:
+
+W = Write quorum
+R = Read quorum
+
+Condition:
+
+R + W > N
+
+Example:
+
+N=3
+W=2
+R=2
+
+Since:
+
+2 + 2 > 3
+
+every read quorum overlaps every write quorum.
+
+This guarantees strong consistency.
+
+---
+
+## 5. Quorum Write
+
+Write:
+
+Balance = 900
+
+Written to:
+
+R1
+R2
+
+Write acknowledged only after:
+
+2 replicas persist data.
+
+Now write is committed.
+
+---
+
+## 6. Quorum Read
+
+Read queries:
+
+R2
+R3
+
+R2 = 900
+R3 = 1000
+
+Because read overlaps with write quorum, latest version can be determined.
+
+Strong consistency achieved.
+
+---
+
+## 7. Downsides of Quorum Reads
+
+Every read requires:
+
+* Multiple network calls
+* Version comparison
+* Higher latency
+
+This is why many systems prefer leader-based consensus.
+
+---
+
+## 8. Raft Leader-Based Approach
+
+Cluster:
+
+R1
+R2
+R3
+
+One node is leader.
+
+Example:
+
+R1 = Leader
+
+All writes go through leader.
+
+---
+
+### Write Flow
+
+Client
+|
+v
+R1 (Leader)
+
+R1:
+
+1. Write locally
+2. Replicate to followers
+3. Wait for majority ACK
+4. Commit
+5. Reply SUCCESS
+
+Example:
+
+R1 + R2 have write
+
+Majority achieved
+
+Write committed.
+
+---
+
+## 9. Why Majority Matters
+
+For 3 nodes:
+
+Majority = 2
+
+A write is considered committed only when stored on at least 2 nodes.
+
+This guarantees committed data cannot disappear.
+
+---
+
+## 10. Reads in Raft
+
+Instead of quorum reads:
+
+Read -> Leader
+
+Leader already knows latest committed state.
+
+Advantages:
+
+* Simpler
+* Faster
+* Strongly consistent
+
+---
+
+## 11. Leader Election
+
+Cluster:
+
+R1
+R2
+R3
+
+Initially:
+
+R1 = Leader
+
+Leader sends heartbeats to followers.
+
+Heartbeat means:
+
+"I am still leader."
+
+---
+
+### Leader Failure
+
+If followers stop receiving heartbeats:
+
+1. Election starts
+2. Nodes vote
+3. Majority wins
+4. New leader elected
+
+Example:
+
+R2 becomes leader.
+
+---
+
+## 12. Terms
+
+Each election increases term.
+
+Example:
+
+Term 5 -> R1 leader
+Term 6 -> R2 leader
+
+Higher term always wins.
+
+If a node sees a higher term:
+
+It immediately steps down.
+
+---
+
+## 13. Network Partition
+
+Example:
+
+R1 isolated
+
+R2 <--> R3 connected
+
+Majority side:
+
+R2 + R3
+
+Minority side:
+
+R1
+
+R2 and R3 elect new leader.
+
+R1 cannot remain leader because it no longer has majority.
+
+---
+
+## 14. Strong Consistency During Partition
+
+Nodes without majority:
+
+* Cannot become leader
+* Cannot accept writes
+* Should not serve strong reads
+
+Reason:
+
+They cannot prove their data is current.
+
+Therefore they sacrifice availability to preserve consistency.
+
+---
+
+## 15. Why R2 Can Become Leader But R3 Cannot
+
+Suppose:
+
+Write W stored on:
+
+R1
+R2
+
+R3 never received W.
+
+Then:
+
+R1 crashes.
+
+Safe leader:
+
+R2
+
+Unsafe leader:
+
+R3
+
+Reason:
+
+R2 contains latest committed write.
+
+Raft voting rules are designed to prefer the most up-to-date node as leader so committed writes never disappear.
+
+---
+
+## 16. Traditional DB vs Raft DB
+
+### Traditional MySQL/Postgres
+
+Primary
+|
++--> Replicas
+
+A failover manager promotes a replica when primary dies.
+
+Examples:
+
+* Patroni
+* Orchestrator
+
+---
+
+### Raft-Based Databases
+
+Node1
+Node2
+Node3
+
+All peers.
+
+One becomes leader.
+
+Leadership can move automatically through elections.
+
+Examples:
+
+* CockroachDB
+* TiDB
+* YugabyteDB
+
+---
+
+## Key Interview Takeaways
+
+1. Async replicas do not guarantee strong consistency.
+2. Banking systems usually read critical data from primary or a strongly consistent cluster.
+3. Quorum rule: R + W > N.
+4. Raft commits writes only after majority replication.
+5. Reads are typically served from leader.
+6. Leader election is used to maintain a single authoritative writer.
+7. During partitions, only the majority side continues serving strong reads/writes.
+8. Consistency is preferred over availability in banking systems.

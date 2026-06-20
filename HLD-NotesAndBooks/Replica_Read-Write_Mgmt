@@ -1,0 +1,71 @@
+# Distributed Systems Quick Reference
+
+## 1. Strong Consistency in Reads
+
+Strong consistency means every read returns the **most recent committed write**, no matter which node serves it.
+
+Ways to achieve it:
+- Read from the Leader only (simple, but leader becomes bottleneck)
+- Quorum read (R nodes, W+R>N guarantees overlap with latest write)
+- Read-your-own-writes (track last write timestamp, route reads to a node caught up to it)
+
+Tradeoff: Strong consistency reduces availability/throughput. Weaker consistency (read from any follower) increases throughput but risks stale reads.
+
+---
+
+## 2. Quorum Based Reads/Writes (Leaderless — e.g. Cassandra, DynamoDB)
+
+- No single leader — any node can accept writes.
+- N = total nodes, W = write quorum, R = read quorum.
+- **Rule: W + R > N guarantees overlap** between write set and read set → read always sees the latest write.
+- Write: client sends to all N nodes, succeeds once W nodes ack.
+- Read: client queries R nodes, compares timestamps/versions, returns the latest.
+- Conflicts CAN happen (two writes to different node sets) — resolved via Last-Write-Wins, vector clocks, or CRDTs.
+- W+R ≤ N → AP behavior (available, eventually consistent).
+- W+R > N → CP-like behavior (consistent, less available during partition).
+
+---
+
+## 3. Raft Based Reads/Writes (Leader-based — e.g. etcd, Kafka KRaft, CockroachDB)
+
+- One elected Leader handles **all writes**. No conflicts possible — leader decides strict order.
+- **Write path:** Client → Leader → Leader appends to log → replicates to followers → waits for **majority (N/2+1) acks** → commits → returns success. (Doesn't wait for ALL nodes — tolerates minority failures.)
+- **Read path:** Flexible —
+  - Read from Leader → strong consistency, but leader is bottleneck.
+  - Read from Followers → scales better, may be slightly stale.
+- Why majority for writes: guarantees any future majority (new leader election) overlaps with the write majority → no committed data is ever lost.
+- Same math as quorum (W+R>N), applied to write-quorum + election-quorum instead of write+read.
+
+---
+
+## 4. Election Process (Raft)
+
+**States:** Follower → Candidate → Leader
+
+**Normal operation:**
+- Leader sends heartbeat every ~150ms to all followers.
+
+**Election trigger:**
+- Follower gets no heartbeat within a **randomized timeout** (150–300ms, different per node) → assumes leader dead → becomes Candidate.
+- Randomization prevents all nodes from starting elections simultaneously (avoids repeated split votes).
+
+**Candidate steps:**
+1. Increments term number (`term = term + 1`)
+2. Votes for itself
+3. Sends `RequestVote` RPC to all other nodes
+
+**Voting rules (each node):**
+- Votes YES only if: hasn't already voted this term, AND candidate's log is at least as up-to-date.
+- Receiving a vote request resets that node's own election timeout (prevents it from also becoming a candidate).
+
+**Becoming Leader:**
+- Candidate becomes Leader once it gets majority votes (N/2+1, including self-vote).
+- Immediately sends heartbeats to assert authority.
+
+**Split vote:** If two candidates tie with no majority, election simply times out and retries with new random timeouts — eventually one wins.
+
+**Where state lives:**
+- Vote count: in-memory only on the Candidate (temporary, discarded after election).
+- `currentTerm` and `votedFor`: persisted to disk on every node (prevents double-voting after a crash/restart).
+
+**Term number:** Acts as a logical clock. Higher term always wins — prevents an old, recovered leader from overriding the current one.

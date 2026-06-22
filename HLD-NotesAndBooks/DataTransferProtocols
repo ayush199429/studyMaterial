@@ -1,0 +1,26 @@
+Quick Decision Guide
+Need real-time bidirectional? → WebSocket
+Need server push only?        → SSE
+Need fast service-to-service? → gRPC
+Need public API?              → REST
+Need flexible queries?        → GraphQL
+Need async decoupled?         → Kafka/Message Queue
+Need event notifications?     → Webhook
+Need IoT/low bandwidth?       → MQTT
+Need peer-to-peer video?      → WebRTC
+
+Summary Table
+Protocol/Pattern     Direction             Sync/Async         Best For
+HTTP/REST         Request-Response            Sync           Public APIs
+GraphQL           Request-Response            Sync           Flexible queries
+gRPC              Request-Response/Stream     Both           Internal services
+WebSocket         Bidirectional               Async          Real-time apps
+SSE               Server→Client               Async          Live feeds
+Kafka/MQ          Producer→Consumer           Async          Event-driven
+Webhook           Server→Client               Async          Event notifications
+Long Polling      Request-Response         Sync(fake async)  Simple notifications
+WebRTC            Peer-to-Peer                Async          Video/audio calls
+MQTT              Pub-Sub                     Async          IoT devices
+
+Transport protocols (TCP/UDP/TLS) are the foundation. Application protocols (HTTP/WebSocket/gRPC) build on top. Communication patterns (REST/GraphQL/events) define HOW you structure the conversation. Pick based on: real-time needs, direction of data flow, internal vs external, and latency requirements. ✅
+You said: how does webRTC work without a server ?

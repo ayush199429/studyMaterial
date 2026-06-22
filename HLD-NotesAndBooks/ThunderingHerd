@@ -1,0 +1,10 @@
+1. Massive load to DB when it re-starts after a crash.
+2. High load to cache when a popular key gets expired.
+3. To servers during flash sale.
+4. To Queue when it restarts.
+
+To Handle:
+1. Rate Limiting
+2. Use Lock in Redis - the first request gets the lock and repopulates the cache with the requested key:value and other requests wait till then instead of querying the DB.
+3. JItter - Add some random value to retry timer, for ex, instead of 1sec , servers retry after 1.1, 1.2, 1.5 sec.
+4. Progress Retry time - like first 1s then 2s then 4s then 8sec... this decreases the load on server/cache/DB.

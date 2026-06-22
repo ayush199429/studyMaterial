@@ -1,3 +1,13 @@
+| Type                              | Examples                              |
+| --------------------------------- | ------------------------------------- |
+| Transport Protocol                | TCP, UDP                              |
+| Application Protocol              | HTTP, HTTP/2, HTTP/3, WebSocket, MQTT |
+| API Style / Pattern               | REST, RPC, GraphQL                    |
+| Framework                         | gRPC                                  |
+| Integration Pattern               | Webhooks                              |
+| Real-time Communication Framework | WebRTC                                |
+
+
 Quick Decision Guide
 Need real-time bidirectional? → WebSocket
 Need server push only?        → SSE

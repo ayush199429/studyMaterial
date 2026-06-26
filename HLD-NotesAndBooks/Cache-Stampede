@@ -1,0 +1,114 @@
+A Cache Stampede (also called Dogpile Effect) happens when many requests miss the same cache entry simultaneously, causing all of them to hit the DB.
+
+Example:
+
+Redis:
+Product:123 expires
+
+1000 users request it at the same time.
+
+Without protection:
+
+1000 Requests
+      |
+Cache Miss
+      |
+1000 DB Queries
+
+The DB gets overwhelmed.
+
+Common Causes
+Cache TTL expires.
+Cache server restarts.
+Hot key evicted due to memory pressure.
+Solutions
+1. Distributed Lock (Most Common)
+
+First request:
+
+Cache Miss
+     |
+Acquire Redis Lock ✅
+     |
+Read DB
+     |
+Update Cache
+     |
+Release Lock
+
+Other requests:
+
+Cache Miss
+     |
+Lock exists
+     |
+Wait / Retry after 50ms
+
+Only one DB query happens.
+
+
+Value getProduct(id) {
+
+    // 1. Try cache
+    val = redis.get(id);
+    if (val != NULL)
+        return val;
+
+    // 2. Try distributed lock
+    if (redis.tryLock("lock:" + id)) {
+
+        try {
+            // Someone else may have populated while we acquired lock
+            val = redis.get(id);
+            if (val != NULL)
+                return val;
+
+            // Read DB
+            val = db.get(id);
+
+            // Populate cache
+            redis.set(id, val, TTL);
+
+            return val;
+        }
+        finally {
+            redis.unlock("lock:" + id);
+        }
+    }
+
+    // 3. Another server is already fetching from DB
+    while (true) {
+
+        sleep(50ms);
+
+        val = redis.get(id);
+
+        if (val != NULL)
+            return val;
+    }
+}
+
+
+
+2. TTL Jitter
+
+Instead of:
+
+All keys expire at 10:00
+
+use:
+
+10:00 ± random(0-60 sec)
+
+So millions of keys don't expire together.
+
+
+3. Never Expire Hot Keys
+
+For very popular items:
+
+Movie Catalog
+Product List
+
+Refresh them in the background instead of letting them expire.
+

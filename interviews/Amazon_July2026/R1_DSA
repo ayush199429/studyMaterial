@@ -1,6 +1,6 @@
 Maximum no of meetings that can be scheduled with k rooms.
 
-int maxMeetings(vector<pair<int, int>>& meetings, int k) {
+int maxMeetings(vector<vector<int>>& meetings, int k) {
     if (k == 0)
         return 0;
     sort(meetings.begin(), meetings.end());   // sort by start time

@@ -11,7 +11,7 @@ int maxMeetings(vector<vector<int>>& meetings, int k) {
     for (int i=0;i<meetings.size();i++) {
         int start = meetings[i][0], end = meetings[i][1];
         if(pq.top() <= start){
-            pq.pop()
+            pq.pop();
             pq.push(end);
             ans++;
         }

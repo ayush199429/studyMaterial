@@ -1,0 +1,4 @@
+design a LLD of a notification content validator system. Notification can be of different channels like email, push etc. 
+The service should provide functionality to validate the content of notification like title, body etc according to different rules 
+and each channel can have its own criteria of validation like max-limit of title/body etc.
+

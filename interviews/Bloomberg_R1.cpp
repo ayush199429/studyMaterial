@@ -1,5 +1,5 @@
 /*
-They also asked few c++ ques like how hashmap is implemented, how doubly linked list is implemented.
+They also asked few c++ ques like how hashmap is implemented, how doubly linked list is implemented, unique_ptr/shared_ptr.
 Then they asked many ques on gRPC project like how sequencing of events is maintained, what is grpc, why used it, why is it faster, 
 does it use json, does it use http?
 i said grpc is faster because it uses protobufs and provides streaming ability. But i fucked on whether grpc uses http or not and whether

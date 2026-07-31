@@ -1,0 +1,27 @@
+                    Browser
+                       │
+                HTTPS Request
+                       │
+                    DNS
+                       │
+                      CDN
+                       │
+                  L4 Load Balancer
+                       │
+                  API Gateway
+          (Auth + Rate Limit + Routing)
+                       │
+              ┌────────┴────────┐
+              │                 │
+          User Service      Order Service
+              │                 │
+        L7 LB (per svc)   L7 LB (per svc)
+              │                 │
+      ┌───────┴───────┐   ┌─────┴─────┐
+      │               │   │           │
+   User-1         User-2 Order-1   Order-2
+      │
+      ├── Redis
+      ├── MySQL
+      ├── Kafka
+      └── gRPC → Notification Service

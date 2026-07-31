@@ -1,0 +1,129 @@
+MySQL vs MongoDB vs Cassandra Comparison
+
+  ---------------------------------------------------------------------------
+  Aspect         MySQL             MongoDB             Cassandra
+  -------------- ----------------- ------------------- ----------------------
+  DB Type        Relational        Document DB         Wide-column NoSQL
+                 (RDBMS)                               
+
+  Data Model     Tables & Rows     JSON/BSON Documents Tables with Partition
+                                                       Keys
+
+  Schema         Fixed             Flexible            Fixed (evolvable)
+                                   (schema-less)       
+
+  Primary Key    Optional          Mandatory (_id)     Mandatory
+                 (recommended)                         
+
+  Secondary      Excellent         Excellent           Limited (avoid at
+  Index                                                scale)
+
+  Joins          Yes               No                  No
+
+  Transactions   Full ACID         Multi-document      Limited (partition
+                                   supported           level)
+
+  Read Latency   ~1–5 ms           ~2–10 ms            ~2–10 ms
+
+  Write Latency  ~2–10 ms          ~2–10 ms            ~1–5 ms
+
+  Write          Medium            High                Very High
+  Throughput                                           
+
+  Horizontal     Manual Sharding   Native Sharding     Native (peer-to-peer)
+  Scaling                                              
+
+  Vertical       Excellent         Good                Limited
+  Scaling                                              
+
+  Read Pattern   SQL Queries       Document Queries    Primary Key Lookup
+
+  Write Pattern  Random Updates    Document Updates    Append/Upsert
+                                                       Optimized
+
+  Best Index     B+ Tree           B+ Tree             Partition Key
+
+  Storage        Row-oriented      BSON Documents      SSTables + LSM Tree
+
+  Query Language SQL               Mongo Query         CQL
+                                   Language            
+
+  Aggregations   Excellent         Good                Limited
+
+  Analytics      Good              Fair                Fair
+
+  Full-text      Limited           Basic               No
+  Search                                               
+
+  Consistency    Strong            Strong/Eventual     Tunable
+
+  Replication    Primary-Replica   Replica Set         Peer-to-Peer
+
+  Failover       Automatic         Automatic           Automatic
+
+  Suitable for   With Sharding     Yes                 Designed for it
+  Billions of                                          
+  Rows                                                 
+
+  Typical Use    Banking, Orders,  User Profiles,      Time Series, Logs,
+                 ERP               Catalogs            Messaging, IoT
+  ---------------------------------------------------------------------------
+
+Internal Storage
+
+-   MySQL: InnoDB, Row storage, B+ Tree indexes
+-   MongoDB: WiredTiger, BSON documents, B+ Tree indexes
+-   Cassandra: LSM Tree, SSTables, Bloom Filters, Partition Index
+
+Strengths
+
+MySQL
+
+-   ACID transactions
+-   SQL
+-   Complex joins
+-   Mature optimizer
+
+MongoDB
+
+-   Flexible schema
+-   Rich indexing
+-   Easy object mapping
+
+Cassandra
+
+-   Massive horizontal scaling
+-   Millions of writes/sec
+-   Excellent key-value lookups
+-   No master bottleneck
+
+Weaknesses
+
+MySQL
+
+-   Hard to shard
+-   Write scaling is difficult
+
+MongoDB
+
+-   Limited joins
+-   Multi-document transactions are expensive
+
+Cassandra
+
+-   No joins
+-   Query-driven schema design
+-   Secondary indexes don’t scale well
+
+When to Choose
+
+-   Banking, Orders → MySQL
+-   User Profiles, Product Catalog → MongoDB
+-   TinyURL, WhatsApp Messages, Metrics, IoT → Cassandra
+
+Interview Rule
+
+-   Need joins + transactions + SQL → MySQL
+-   Need flexible JSON documents → MongoDB
+-   Need billions of rows + millions of writes/sec + PK lookups →
+    Cassandra

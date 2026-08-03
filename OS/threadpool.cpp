@@ -24,6 +24,8 @@ class Threadpool{
     void submit(std::function<void()> task){
         {
             unique_lock<mutex> lck(mtx);
+            if (stop)
+                return;
             tasks.push(std::move(task));
         }
         cv.notify_one();

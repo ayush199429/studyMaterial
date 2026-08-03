@@ -1,0 +1,451 @@
+# Kafka Fundamentals: Brokers, Partitions, Producers and Consumers
+
+## 1. Kafka Cluster
+
+A Kafka **cluster** is a collection of Kafka **brokers** working together.
+
+```
+Kafka Cluster
+
++-----------+
+| Broker 1  |
++-----------+
+
++-----------+
+| Broker 2  |
++-----------+
+
++-----------+
+| Broker 3  |
++-----------+
+```
+
+A company may have **many Kafka clusters**, each serving a different purpose (logging, payments, analytics, notifications, etc.). A cluster is **not** company-wide.
+
+---
+
+# 2. Broker
+
+A broker is a Kafka server responsible for storing data.
+
+A broker can store:
+
+* Multiple topics
+* Multiple partitions of the same topic
+* Replicas of partitions
+
+Example:
+
+```
+Broker 1
+
+Topic: user-events
+P0
+P3
+
+Topic: orders
+P1
+
+Topic: payments
+P0
+```
+
+A broker is **not** limited to one partition or one topic.
+
+---
+
+# 3. Topic and Partition
+
+A topic is divided into partitions for scalability and parallelism.
+
+Example:
+
+```
+Topic: user-events
+
+P0
+P1
+P2
+P3
+```
+
+Each partition is an append-only log.
+
+Example:
+
+```
+Partition 0
+
+Offset 0
+Offset 1
+Offset 2
+Offset 3
+...
+```
+
+Every message receives a monotonically increasing offset.
+
+---
+
+# 4. Partition Leaders
+
+Every partition has exactly one **leader**.
+
+Example:
+
+```
+Partition 0
+
+Leader -> Broker 2
+
+Followers
+
+Broker 1
+Broker 3
+```
+
+Producers and consumers always communicate with the **leader**.
+
+---
+
+# 5. Kafka Producer
+
+A producer writes events into Kafka.
+
+Creating a producer:
+
+```java
+Properties props = new Properties();
+
+props.put(
+    ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,
+    "broker1:9092,broker2:9092"
+);
+
+KafkaProducer<String,String> producer =
+        new KafkaProducer<>(props);
+```
+
+The bootstrap servers are **only initial contact points**.
+
+The producer contacts one broker, fetches cluster metadata, and learns:
+
+* Topics
+* Partitions
+* Leader brokers
+
+After that it communicates directly with the appropriate leader brokers.
+
+---
+
+# 6. How Producer Chooses a Partition
+
+Three possibilities:
+
+### A. Explicit partition
+
+```java
+new ProducerRecord<>(
+    "user-events",
+    2,
+    "user123",
+    "Login"
+);
+```
+
+Producer directly writes to Partition 2.
+
+---
+
+### B. Key provided
+
+```java
+new ProducerRecord<>(
+    "user-events",
+    "user123",
+    "Login"
+);
+```
+
+Producer computes:
+
+```
+Partition = hash(key) % numberOfPartitions
+```
+
+All events with the same key go to the same partition, preserving ordering.
+
+---
+
+### C. No key
+
+Kafka's default partitioner distributes messages across partitions (using a sticky strategy for efficient batching).
+
+---
+
+# 7. Producer Request Flow
+
+```
+Application
+
+↓
+
+ProducerRecord
+
+↓
+
+Choose Partition
+
+↓
+
+Find Leader Broker
+
+↓
+
+ProduceRequest
+
+↓
+
+Broker
+```
+
+The ProduceRequest already contains:
+
+* Topic
+* Partition
+* Record batch
+
+The broker does **not** decide the partition.
+
+---
+
+# 8. Kafka Consumer
+
+Consumers read messages from Kafka.
+
+Example:
+
+```java
+consumer.subscribe(
+    List.of(
+        "user-events",
+        "orders"
+    )
+);
+```
+
+Consumers subscribe to **topics**, never to brokers.
+
+---
+
+# 9. Consumer Groups
+
+Consumers belong to consumer groups.
+
+Example:
+
+```
+Consumer Group
+
+notification-service
+
+Consumer A
+
+Consumer B
+```
+
+Suppose the topic has four partitions:
+
+```
+P0
+P1
+P2
+P3
+```
+
+Kafka assigns:
+
+```
+Consumer A
+
+P0
+P2
+
+Consumer B
+
+P1
+P3
+```
+
+Consumers do **not** choose partitions.
+
+Kafka's Group Coordinator assigns them.
+
+Within a consumer group:
+
+* One partition is owned by only one consumer.
+* A consumer may own multiple partitions.
+
+---
+
+# 10. Polling
+
+Consumers pull data using:
+
+```java
+consumer.poll(Duration.ofMillis(100));
+```
+
+The duration means:
+
+> Wait up to 100 ms for new data before returning.
+
+It does **not** mean "return the last 100 ms of events."
+
+---
+
+# 11. Fetch Requests
+
+Once partitions are assigned, the consumer polls specific partitions.
+
+Conceptually:
+
+```
+FetchRequest
+
+Topic = orders
+
+Partition = P2
+
+Offset = 145
+```
+
+Broker returns records beginning at Offset 145.
+
+The consumer—not Kafka—specifies both the partition and the offset.
+
+---
+
+# 12. Offsets
+
+Every partition has offsets:
+
+```
+0
+1
+2
+3
+4
+...
+```
+
+Two different offset concepts exist:
+
+### Current Offset
+
+Maintained by the consumer in memory.
+
+Represents the next record to fetch.
+
+---
+
+### Committed Offset
+
+Stored by Kafka.
+
+Represents the last successfully processed checkpoint.
+
+Example:
+
+```
+Consumer Group
+
+notification-service
+
+Partition 0
+
+Committed Offset = 146
+```
+
+If the consumer crashes, it resumes from the committed offset.
+
+---
+
+# 13. Offset Commit
+
+Correct processing sequence:
+
+```
+Poll
+
+↓
+
+Process Messages
+
+↓
+
+Commit Offset
+```
+
+Never commit immediately after polling.
+
+If the application crashes after committing but before processing, messages are lost.
+
+---
+
+# 14. Delivery Guarantees
+
+If processing succeeds but committing fails:
+
+```
+Process
+
+↓
+
+Crash
+
+↓
+
+Restart
+
+↓
+
+Messages Delivered Again
+```
+
+Kafka provides **at-least-once delivery** by default.
+
+Duplicate processing is possible, so consumers should ideally be idempotent.
+
+---
+
+# 15. Auto Commit
+
+Configuration:
+
+```properties
+enable.auto.commit=true
+auto.commit.interval.ms=5000
+```
+
+The Kafka **consumer client** periodically sends an OffsetCommitRequest.
+
+Kafka merely stores the committed offset.
+
+The broker never decides when to commit.
+
+---
+
+# Key Takeaways
+
+* A Kafka cluster contains multiple brokers.
+* Brokers store many topics and many partitions.
+* Topics are divided into partitions.
+* Each partition has one leader broker.
+* Producers choose partitions and send ProduceRequests to leader brokers.
+* Consumers subscribe to topics.
+* Kafka assigns partitions to consumers within a consumer group.
+* Consumers poll assigned partitions using offsets.
+* Consumers own the current offset; Kafka stores the last committed offset.
+* Offset should be committed only after successful processing.
+* Kafka's default guarantee is **at-least-once delivery**.

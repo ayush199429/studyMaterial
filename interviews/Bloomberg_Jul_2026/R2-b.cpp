@@ -20,23 +20,30 @@ struct Alert {
     function<void(const Trade&)> callback;
 };
 
+using AlertList = list<Alert>;
+using AlertIterator = AlertList::iterator;
+
 struct AlertBucket {
-    shared_mutex mtx;
-    vector<Alert> alerts;
+    mutable shared_mutex mtx;
+    AlertList alerts;
+};
+
+struct AlertLocation {
+    string security;
+    int threshold;
+    AlertIterator it;
 };
 
 class TradeAlertService {
 
-    // security -> threshold -> alert bucket
-    unordered_map<string,
-        map<int, AlertBucket>> alerts;
+    // security -> threshold -> alerts
+    unordered_map<string, map<int, AlertBucket>> buckets;
 
-    // alertId -> (security, threshold)
-    unordered_map<AlertId,
-        pair<string, int>> alertIndex;
+    // handle -> exact location of alert
+    unordered_map<AlertId, AlertLocation> handleMap;
 
-    // Protects creation/access of the outer structures.
-    mutex mapMutex;
+    // Protects buckets/handleMap themselves.
+    mutex globalMutex;
 
     atomic<AlertId> nextId{1};
 
@@ -49,78 +56,82 @@ public:
     {
         AlertId id = nextId.fetch_add(1);
 
-        {
-            lock_guard<mutex> lock(mapMutex);
+        lock_guard<mutex> globalLock(globalMutex);
 
-            alerts[security][threshold].alerts.push_back(
-                {id, security, threshold, callback}
-            );
+        auto& bucket = buckets[security][threshold];
 
-            alertIndex[id] = {security, threshold};
-        }
+        unique_lock<shared_mutex> bucketLock(bucket.mtx);
+
+        bucket.alerts.push_back({
+            id,
+            security,
+            threshold,
+            callback
+        });
+
+        auto it = prev(bucket.alerts.end());
+
+        handleMap[id] = {
+            security,
+            threshold,
+            it
+        };
 
         return id;
     }
 
     void unsubscribe(AlertId id)
     {
-        pair<string, int> location;
+        lock_guard<mutex> globalLock(globalMutex);
 
-        {
-            lock_guard<mutex> lock(mapMutex);
+        auto it = handleMap.find(id);
 
-            auto it = alertIndex.find(id);
+        if (it == handleMap.end())
+            return;
 
-            if (it == alertIndex.end())
-                return;
+        AlertLocation location = it->second;
 
-            location = it->second;
-            alertIndex.erase(it);
-        }
+        auto& bucket =
+            buckets[location.security][location.threshold];
 
-        auto& [security, threshold] = location;
+        unique_lock<shared_mutex> bucketLock(bucket.mtx);
 
-        auto& bucket = alerts[security][threshold];
+        bucket.alerts.erase(location.it);
 
-        unique_lock<shared_mutex> lock(bucket.mtx);
-
-        auto& vec = bucket.alerts;
-
-        vec.erase(
-            remove_if(vec.begin(), vec.end(),
-                [&](const Alert& alert) {
-                    return alert.id == id;
-                }),
-            vec.end()
-        );
+        handleMap.erase(it);
     }
 
     void notify(const Trade& trade)
     {
-        vector<Alert> alertsToNotify;
+        vector<function<void(const Trade&)>> callbacks;
 
-        // Find all thresholds <= trade.size.
-        // For every relevant bucket, take shared lock,
-        // read/copy its alerts and release the lock.
+        lock_guard<mutex> globalLock(globalMutex);
 
-        for (auto& [threshold, bucket] :
-             alerts[trade.security])
+        auto securityIt = buckets.find(trade.security);
+
+        if (securityIt == buckets.end())
+            return;
+
+        auto& thresholdMap = securityIt->second;
+
+        for (auto it = thresholdMap.begin();
+             it != thresholdMap.end() &&
+             it->first <= trade.size;
+             ++it)
         {
-            if (threshold > trade.size)
-                break;
+            auto& bucket = it->second;
 
-            shared_lock<shared_mutex> lock(bucket.mtx);
+            shared_lock<shared_mutex> bucketLock(bucket.mtx);
 
             for (const auto& alert : bucket.alerts)
             {
-                alertsToNotify.push_back(alert);
+                callbacks.push_back(alert.callback);
             }
         }
 
-        // Do NOT call user callbacks while holding locks.
-        for (const auto& alert : alertsToNotify)
-        {
-            alert.callback(trade);
-        }
+        // bucket locks released here
+        // global lock also released after this scope
     }
+
+    // Call callbacks outside all locks.
 };

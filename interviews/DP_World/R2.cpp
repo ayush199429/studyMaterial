@@ -1,5 +1,7 @@
-n*n matrix having 1 to n2 numbers. One num is missing and one is repeated. Find both.
+DSA Question:
+Q. n*n matrix having 1 to n2 numbers. One num is missing and one is repeated. Find both.
 - I solved using marking the index for every number as negative and if we encounter a negative num twice then that is the repeated number.
+
 
 LLD:
 Port{
@@ -73,7 +75,8 @@ Slot{
     SlotStatus status
 };
 
-HLD:
-if an API is sometimes slow, sometimes fine, then what could be the causes?
+
+HLD Question:
+Q. If an API is sometimes slow, sometimes fine, then what could be the causes?
 - I told DB, downstream API, CPU overloaded.
 

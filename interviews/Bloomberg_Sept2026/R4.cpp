@@ -7,25 +7,25 @@ class SharedPtr {
     T* ptr;
     size_t* refCount;
 
-public:
-    // 1. Default constructor
-    SharedPtr()
-        : ptr(nullptr), refCount(nullptr) {}
-
-    // 2. Constructor from raw pointer
-    explicit SharedPtr(T* p)
-        : ptr(p), refCount(new size_t(1)) {}
-
-    // 3. Copy constructor
-    SharedPtr(const SharedPtr& other)
-        : ptr(other.ptr), refCount(other.refCount) {
-        if (refCount)
-            ++(*refCount);
+    SharedPtr(){
+        ptr = nullptr;
+        refCount = nullptr;
     }
 
-    // Destructor
+    SharedPtr(const T& obj){
+        ptr = new T(obj); 
+        refCount = new size_t(1));
+    }
+
+    SharedPtr(const SharedPtr& other){
+        ptr = other.ptr;
+        refCount = other.refCount;
+        (*refCount)++;
+    }
+
     ~SharedPtr() {
-        if (refCount && --(*refCount) == 0) {
+        (*refCount)--;
+        if (refCount == 0) {
             delete ptr;
             delete refCount;
         }

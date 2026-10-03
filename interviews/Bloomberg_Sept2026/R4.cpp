@@ -1,4 +1,7 @@
-//Q. Implement SharedPtr and verbally discuss how to make it thread safe.
+//Data Structures you are aware of. How hashmap works.
+//Types of Memory in C++ program. How GC works in Java. 
+//Implement SharedPtr.
+//Discuss Thread safety. What all type of locks are you aware of in c++.
 
 #include <cstddef>
 
